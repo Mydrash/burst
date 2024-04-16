@@ -36,11 +36,10 @@ pub fn scan_for_pngs<R: BufRead + Seek>(
                 && contents[pos..pos + CHUNK_SIZE] == *PNG_SIGNATURE
             {
                 if let Some(start_pos) = did_find.take() {
-                    let end_pos = cursor_pos;
-                    info!("<- Found a PNG Image at {cursor_pos:x}");
-                    found.push(start_pos..end_pos);
+                    info!("<- Found a PNG signature at {cursor_pos}");
+                    found.push(start_pos..cursor_pos);
                 } else {
-                    info!("-> Found a PNG Signature at {cursor_pos:x}");
+                    info!("-> Found a PNG Signature at {cursor_pos}");
                     did_find = Some(cursor_pos);
                 }
             }

@@ -1,7 +1,11 @@
 use anyhow::{bail, Context};
 use argh::FromArgs;
 use log::info;
-use std::fs::{metadata, File};
+use std::{
+    fs::{metadata, File, OpenOptions},
+    io::{copy, BufReader, Read, Seek, SeekFrom},
+    path::PathBuf,
+};
 
 use crate::native::scan_for_pngs;
 
@@ -16,6 +20,10 @@ pub struct ExtractPngs {
     #[argh(option, short = 'd')]
     /// the destnation directory
     pub destination: String,
+
+    #[argh(option, short = 'B', default = "65536")]
+    /// the buffer size
+    pub buffer_size: usize,
 }
 
 pub fn extract_pngs(info: ExtractPngs) -> anyhow::Result<()> {
@@ -34,8 +42,33 @@ pub fn extract_pngs(info: ExtractPngs) -> anyhow::Result<()> {
     }
 
     info!("analyzing {}...", info.native_lib);
-    let mut input = File::open(info.native_lib).context("unable to open source file")?;
+    let mut image_count = 1;
 
-    scan_for_pngs(&mut input)?;
+    let file = File::open(info.native_lib).context("unable to open source file")?;
+    let mut input = BufReader::new(file);
+
+    let ranges = scan_for_pngs(&mut input, info.buffer_size)?;
+
+    input.seek(SeekFrom::Start(0))?;
+
+    for pos in ranges {
+        // Ain miga esse target tá mto divaaaa
+        let mut path = PathBuf::from(&info.destination);
+        path.push(format!("Image {image_count}.png"));
+
+        info!("Copying {pos:?} into {path:?}");
+
+        let mut output = OpenOptions::new().write(true).read(true).open(path)?;
+
+        input.seek(SeekFrom::Start(pos.start as _))?;
+
+        copy(
+            &mut input.by_ref().take((pos.end - pos.start) as _),
+            &mut output,
+        )?;
+
+        image_count += 1;
+    }
+
     Ok(())
 }

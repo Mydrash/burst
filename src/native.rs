@@ -1,27 +1,49 @@
-use std::io::Read;
+use std::{
+    io::{BufRead, Seek},
+    ops::Range,
+};
+
+use log::info;
 
 const PNG_SIGNATURE: &[u8] = b"\x89PNG\r\n\x1a\n";
+const CHUNK_SIZE: usize = PNG_SIGNATURE.len();
 
-#[derive(Debug, Clone)]
-pub struct PngFound {
-    pub start: u64,
-    pub end: u64,
-}
-
-pub fn scan_for_pngs<R: Read>(source: &mut R) -> anyhow::Result<Vec<PngFound>> {
+pub fn scan_for_pngs<R: BufRead + Seek>(
+    source: &mut R,
+    buf_size: usize,
+) -> anyhow::Result<Vec<Range<usize>>> {
     let mut found = vec![];
-    let mut buffer = [0; PNG_SIGNATURE.len()];
-    let mut read = 0;
+    let mut search_buffer = vec![0u8; buf_size];
+    let mut bytes_read: usize;
+    let mut cursor_pos = source.stream_position()? as usize;
+    let mut did_find = Option::<usize>::None;
+
+    info!("Searching using a buffer with {buf_size} of size...");
 
     loop {
-        read = source.read(&mut buffer)?;
+        bytes_read = source.read(&mut search_buffer[..])?;
 
-        if read == 0 {
+        if bytes_read == 0 {
             break;
         }
 
-        if buffer == PNG_SIGNATURE {
-            println!("eu perguntei qual eh a graca, imaginei que vc perguntaria...");
+        let contents = &search_buffer[0..bytes_read];
+
+        for pos in 0..contents.len() {
+            if pos + CHUNK_SIZE <= contents.len()
+                && contents[pos..pos + CHUNK_SIZE] == *PNG_SIGNATURE
+            {
+                if let Some(start_pos) = did_find.take() {
+                    let end_pos = cursor_pos;
+                    info!("<- Found a PNG Image at {cursor_pos:x}");
+                    found.push(start_pos..end_pos)
+                } else {
+                    info!("-> Found a PNG Signature at {cursor_pos:x}");
+                    did_find = Some(cursor_pos);
+                }
+            }
+
+            cursor_pos += 1;
         }
     }
 

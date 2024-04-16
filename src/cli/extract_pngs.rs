@@ -62,6 +62,7 @@ pub fn extract_pngs(info: ExtractPngs) -> anyhow::Result<()> {
             .create(true)
             .write(true)
             .read(true)
+            .truncate(true)
             .open(path)?;
 
         input.seek(SeekFrom::Start(pos.start as _))?;

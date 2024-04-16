@@ -58,7 +58,11 @@ pub fn extract_pngs(info: ExtractPngs) -> anyhow::Result<()> {
 
         info!("Copying {pos:?} into {path:?}");
 
-        let mut output = OpenOptions::new().write(true).read(true).open(path)?;
+        let mut output = OpenOptions::new()
+            .create(true)
+            .write(true)
+            .read(true)
+            .open(path)?;
 
         input.seek(SeekFrom::Start(pos.start as _))?;
 

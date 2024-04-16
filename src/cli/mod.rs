@@ -1,5 +1,7 @@
-use super::extract_pngs::ExtractPngs;
 use argh::FromArgs;
+
+mod extract_pngs;
+pub use extract_pngs::*;
 
 #[derive(FromArgs, Clone, Debug)]
 /// the ultimate minecraft modification tool

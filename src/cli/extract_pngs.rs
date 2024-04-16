@@ -7,7 +7,7 @@ use std::{
     path::PathBuf,
 };
 
-use crate::native::scan_for_pngs;
+use crate::analytics::native::scan_for_pngs;
 
 #[derive(FromArgs, Clone, Debug)]
 #[argh(subcommand, name = "extract-pngs")]
@@ -41,7 +41,7 @@ pub fn extract_pngs(info: ExtractPngs) -> anyhow::Result<()> {
         bail!("the target directory isn't a directory.");
     }
 
-    info!("analyzing {}...", info.native_lib);
+    info!("Analyzing {}...", info.native_lib);
     let mut image_count = 1;
 
     let file = File::open(info.native_lib).context("unable to open source file")?;

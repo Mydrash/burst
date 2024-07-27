@@ -2,6 +2,8 @@ use cli::{Action, Cli};
 
 mod analytics;
 mod cli;
+mod fastzip;
+mod core;
 
 fn main() -> anyhow::Result<()> {
     let cli: Cli = argh::from_env();
@@ -12,5 +14,7 @@ fn main() -> anyhow::Result<()> {
 
     match cli.nested {
         Action::ExtractPngs(info) => cli::extract_pngs(info),
+        Action::FastZip(info) => cli::fastzip(info),
+        Action::X(info) => cli::execute(info),
     }
 }

@@ -18,7 +18,7 @@ pub struct ExtractPngs {
     pub native_lib: String,
 
     #[argh(option, short = 'd')]
-    /// the destnation directory
+    /// the destination directory
     pub destination: String,
 
     #[argh(option, short = 'B', default = "65536")]
